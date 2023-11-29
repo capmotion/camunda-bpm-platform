@@ -30,13 +30,9 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.impl.client.AbstractResponseHandler;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
-import org.camunda.bpm.client.exception.EngineException;
 import org.camunda.bpm.client.exception.RestException;
-import org.camunda.bpm.client.interceptor.impl.RequestInterceptorHandler;
 import org.camunda.commons.utils.IoUtil;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -57,10 +53,9 @@ public class RequestExecutor {
   protected HttpClient httpClient;
   protected ObjectMapper objectMapper;
 
-  protected RequestExecutor(RequestInterceptorHandler requestInterceptorHandler, ObjectMapper objectMapper) {
+  protected RequestExecutor(HttpClient httpClient, ObjectMapper objectMapper) {
+    this.httpClient = httpClient;
     this.objectMapper = objectMapper;
-
-    initHttpClient(requestInterceptorHandler);
   }
 
   protected <T> T postRequest(String resourceUrl, RequestDto requestDto, Class<T> responseClass) {
@@ -70,7 +65,7 @@ public class RequestExecutor {
       .addHeader(HEADER_CONTENT_TYPE_JSON)
       .setEntity(serializedRequest)
       .build();
-    
+
     return executeRequest(httpRequest, responseClass);
   }
 
@@ -79,7 +74,7 @@ public class RequestExecutor {
       .addHeader(HEADER_USER_AGENT)
       .addHeader(HEADER_CONTENT_TYPE_JSON)
       .build();
-    
+
     return executeRequest(httpRequest, byte[].class);
   }
 
@@ -182,14 +177,6 @@ public class RequestExecutor {
     }
 
     return byteArrayEntity;
-  }
-
-  protected void initHttpClient(RequestInterceptorHandler requestInterceptorHandler) {
-    HttpClientBuilder httpClientBuilder = HttpClients.custom()
-      .useSystemProperties()
-      .addInterceptorLast(requestInterceptorHandler);
-
-    this.httpClient = httpClientBuilder.build();
   }
 
 }
